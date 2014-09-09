@@ -1,0 +1,32 @@
+users:
+  # Minimal required pillar value
+  user.a:
+    present:
+      G@id:example1.com:
+
+  # Example with ssh keys, overrides, and absent
+  user.b:
+    # Data in userinfo gets applied to all matching minions
+    userinfo:
+      - password: "$6$c........"
+      - public-keys:
+        - salt://users/ssh-keys/user.b-pc1.pub
+        - salt://users/ssh-keys/user.b-pc2.pub
+      - groups:
+        - wheel
+      - optional_groups:
+        - games
+      - shell: /bin/bash
+    present:
+      G@id:example1.com:
+        # This overrides shell defined in userinfo on minion example1.com
+        - shell: /usr/sbin/nologin
+      G@id:example2.com:
+        # This overrides shell defined in userinfo on minion example2.com
+        - groups:
+          - users
+    absent:
+      # User will be absent on this minion
+      G@id:example3.com:
+        - purge: True
+        - force: True
