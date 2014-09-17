@@ -78,7 +78,7 @@ class UserState:
   def _createOrRemoveUsers(self, matches, userinfo):
 
     state = ""
-    
+
     if self._matchMinion(matches["absent"]):
       state = "absent"
     elif self._matchMinion(matches["present"]):
@@ -112,7 +112,7 @@ class UserState:
     matches = {}
     matches["present"] = self._getMatches(userData, "present")
     matches["absent"] = self._getMatches(userData, "absent")
-    
+
     # Enforce present or absent users
     self._userStateDict = self._createOrRemoveUsers(matches, userinfo) or {}
     return self._userStateDict
@@ -131,4 +131,4 @@ def run():
       states[user] = tempState
       sshAuth.appendStates(user, states[user], states)
 
-  return states 
+  return states
