@@ -78,7 +78,7 @@ class UserState:
   def _createOrRemoveUsers(self, matches, userinfo):
 
     state = ""
-    
+
     if self._matchMinion(matches["absent"]):
       state = "absent"
     elif self._matchMinion(matches["present"]):
@@ -107,14 +107,15 @@ class UserState:
     """Returns a properly formatted salt user state dictionary object"""
     self._userStateDict = {}
 
-    userinfo = userData.get("userinfo", []) or []
+    if userData is not None:
+      userinfo = userData.get("userinfo", []) or []
 
-    matches = {}
-    matches["present"] = self._getMatches(userData, "present")
-    matches["absent"] = self._getMatches(userData, "absent")
-    
-    # Enforce present or absent users
-    self._userStateDict = self._createOrRemoveUsers(matches, userinfo) or {}
+      matches = {}
+      matches["present"] = self._getMatches(userData, "present")
+      matches["absent"] = self._getMatches(userData, "absent")
+
+      # Enforce present or absent users
+      self._userStateDict = self._createOrRemoveUsers(matches, userinfo) or {}
     return self._userStateDict
 
 def run():
@@ -123,12 +124,12 @@ def run():
   sshAuth = SshAuth()
 
   # Create the user and ssh auth states a user at a time
-  for user in __pillar__["users"]:
-    # Prevent the creation of blank user states. This can cause id conflicts.
-    tempState = userState.create(__pillar__["users"][user])
+  for user in salt['pillar.get']('users', []):
+    if user is not None:
+        tempState = userState.create(salt['pillar.get']('users:' + user))
+        # Prevent the creation of blank user states. This can cause id conflicts.
+        if len(tempState) > 0:
+          states[user] = tempState
+          sshAuth.appendStates(user, states[user], states)
 
-    if len(tempState) > 0:
-      states[user] = tempState
-      sshAuth.appendStates(user, states[user], states)
-
-  return states 
+  return states
