@@ -25,8 +25,8 @@ class SshAuth:
     keyCount = 0
     for key in publicKeys:
       existingStates[user + "-pubkey-" + str(keyCount)] = {"ssh_auth.present": [{"user": user},
-                                                            {"source": key},
-                                                            {"require": [{"user": user}]}]}
+                                                                                  {"source": key},
+                                                                                  {"require": [{"user": user}]}]}
       keyCount += 1
 
     return existingStates
@@ -84,6 +84,7 @@ class UserState:
     elif self._matchMinion(matches["present"]):
       state = "present"
 
+
     # If the current minion matches, create user states from user info and match overrides
     if state:
       for match in matches[state]:
@@ -126,10 +127,15 @@ def run():
   # Create the user and ssh auth states a user at a time
   for user in salt['pillar.get']('users', []):
     if user is not None:
-        tempState = userState.create(salt['pillar.get']('users:' + user))
-        # Prevent the creation of blank user states. This can cause id conflicts.
-        if len(tempState) > 0:
-          states[user] = tempState
-          sshAuth.appendStates(user, states[user], states)
-
+      tempState = userState.create(salt['pillar.get']('users:' + user))
+      # Prevent the creation of blank user states. This can cause id conflicts.
+      if len(tempState) > 0:
+        states[user] = tempState
+        sshAuth.appendStates(user, states[user], states)
+  # Remove unused properties
+  for key,value in states.iteritems():
+    if 'user.present' in value.keys():
+      value['user.present'] = [d for d in value['user.present'] if not d.get('public-keys',None)]
+    if 'user.absent' in value.keys():
+      value['user.absent'] = [d for d in value['user.absent'] if filter(lambda x: x not in ['fullname','shell','optional_groups','public-keys'],d.keys())]
   return states
